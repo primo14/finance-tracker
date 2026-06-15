@@ -40,9 +40,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("start") LocalDate start,
             @Param("end") LocalDate end);
 
-    @Query(value = "SELECT EXTRACT(YEAR FROM date)::int, EXTRACT(MONTH FROM date)::int, type, SUM(amount) " +
+    @Query(value = "SELECT CAST(EXTRACT(YEAR FROM date) AS integer), CAST(EXTRACT(MONTH FROM date) AS integer), type, SUM(amount) " +
                    "FROM transactions WHERE user_id = :userId AND date >= :since " +
-                   "GROUP BY EXTRACT(YEAR FROM date)::int, EXTRACT(MONTH FROM date)::int, type " +
+                   "GROUP BY CAST(EXTRACT(YEAR FROM date) AS integer), CAST(EXTRACT(MONTH FROM date) AS integer), type " +
                    "ORDER BY 1, 2", nativeQuery = true)
     List<Object[]> findMonthlySummary(@Param("userId") Long userId, @Param("since") LocalDate since);
 

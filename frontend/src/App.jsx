@@ -10,7 +10,8 @@ import Categories from './pages/Categories'
 
 function PrivateRoute({ children }) {
   const { token } = useAuth()
-  return token ? <Layout>{children}</Layout> : <Navigate to="/login" replace />
+  const isAuth = token || !!localStorage.getItem('token')
+  return isAuth ? <Layout>{children}</Layout> : <Navigate to="/login" replace />
 }
 
 export default function App() {
