@@ -36,3 +36,9 @@ export const transactionApi = {
 export const categoryApi = {
   getAll: () => client.get('/categories'),
 }
+
+export const budgetApi = {
+  getCurrentMonth: () => client.get('/budgets'),
+  upsert: data => client.post('/budgets', data),
+  delete: id => client.delete(`/budgets/${id}`),
+}

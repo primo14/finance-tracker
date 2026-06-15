@@ -1,19 +1,45 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { transactionApi } from '../api/client'
+import { transactionApi, categoryApi, budgetApi } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import BudgetProgress from '../components/BudgetProgress'
+import BudgetManager from '../components/BudgetManager'
 
 const COLORS = ['#1a73e8', '#ea4335', '#fbbc04', '#34a853', '#ff6d00', '#46bdc6', '#7c4dff']
 
 export default function Dashboard() {
   const [summary, setSummary] = useState(null)
+  const [budgets, setBudgets] = useState([])
+  const [categories, setCategories] = useState([])
+  const [showBudgetManager, setShowBudgetManager] = useState(false)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
-    transactionApi.getSummary().then(r => setSummary(r.data))
+    Promise.all([
+      transactionApi.getSummary(),
+      budgetApi.getCurrentMonth(),
+      categoryApi.getAll(),
+    ]).then(([sRes, bRes, cRes]) => {
+      setSummary(sRes.data)
+      setBudgets(bRes.data)
+      setCategories(cRes.data)
+    })
   }, [])
+
+  async function handleSaveBudget(data) {
+    const { data: saved } = await budgetApi.upsert(data)
+    setBudgets(prev => {
+      const exists = prev.find(b => b.id === saved.id)
+      return exists ? prev.map(b => b.id === saved.id ? saved : b) : [...prev, saved]
+    })
+  }
+
+  async function handleDeleteBudget(id) {
+    await budgetApi.delete(id)
+    setBudgets(prev => prev.filter(b => b.id !== id))
+  }
 
   function handleLogout() { logout(); navigate('/login') }
 
@@ -67,6 +93,24 @@ export default function Dashboard() {
                 No spending data yet. <Link to="/transactions">Add a transaction</Link> to get started.
               </div>
             )}
+
+            <BudgetProgress budgets={budgets} />
+
+            <div style={s.budgetAction}>
+              <button onClick={() => setShowBudgetManager(v => !v)} style={s.budgetBtn}>
+                {showBudgetManager ? 'Close' : '+ Set Budget Limits'}
+              </button>
+            </div>
+
+            {showBudgetManager && (
+              <BudgetManager
+                categories={categories}
+                budgets={budgets}
+                onSave={handleSaveBudget}
+                onDelete={handleDeleteBudget}
+                onClose={() => setShowBudgetManager(false)}
+              />
+            )}
           </>
         )}
       </div>
@@ -100,4 +144,6 @@ const s = {
   chartCard: { background: '#fff', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' },
   chartTitle: { marginTop: 0, color: '#202124', fontSize: '1rem' },
   empty: { background: '#fff', padding: '2rem', borderRadius: '12px', textAlign: 'center', color: '#777' },
+  budgetAction: { marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' },
+  budgetBtn: { background: 'none', border: '1px solid #1a73e8', color: '#1a73e8', padding: '0.5rem 1.1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 500 },
 }
