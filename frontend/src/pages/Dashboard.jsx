@@ -41,8 +41,8 @@ export default function Dashboard() {
   const [budgets, setBudgets] = useState([])
 
   useEffect(() => {
-    transactionApi.getSummary().then(r => setSummary(r.data))
-    transactionApi.getMonthly().then(r => setMonthly(r.data))
+    transactionApi.getSummary().then(r => setSummary(r.data)).catch(() => {})
+    transactionApi.getMonthly().then(r => setMonthly(r.data)).catch(() => {})
     budgetApi.getCurrentMonth().then(r => setBudgets(r.data)).catch(() => {})
   }, [])
 
