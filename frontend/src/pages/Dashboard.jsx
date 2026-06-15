@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from 'recharts'
-import { transactionApi, budgetApi, categoryApi } from '../api/client'
+import { transactionApi, budgetApi } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import BudgetManager from '../components/BudgetManager'
 
 const COLORS = ['#4f46e5','#059669','#e11d48','#d97706','#0891b2','#7c3aed','#db2777']
 
@@ -39,28 +39,12 @@ export default function Dashboard() {
   const [summary, setSummary] = useState(null)
   const [monthly, setMonthly] = useState([])
   const [budgets, setBudgets] = useState([])
-  const [categories, setCategories] = useState([])
-  const [showBudgetMgr, setShowBudgetMgr] = useState(false)
 
   useEffect(() => {
     transactionApi.getSummary().then(r => setSummary(r.data))
     transactionApi.getMonthly().then(r => setMonthly(r.data))
     budgetApi.getCurrentMonth().then(r => setBudgets(r.data)).catch(() => {})
-    categoryApi.getAll().then(r => setCategories(r.data))
   }, [])
-
-  async function handleSaveBudget(data) {
-    const { data: saved } = await budgetApi.upsert(data)
-    setBudgets(prev => {
-      const exists = prev.find(b => b.id === saved.id)
-      return exists ? prev.map(b => b.id === saved.id ? saved : b) : [...prev, saved]
-    })
-  }
-
-  async function handleDeleteBudget(id) {
-    await budgetApi.delete(id)
-    setBudgets(prev => prev.filter(b => b.id !== id))
-  }
 
   const balance = parseFloat(summary?.balance || 0)
   const income = parseFloat(summary?.totalIncome || 0)
@@ -82,9 +66,7 @@ export default function Dashboard() {
           <h1 style={s.greeting}>{greeting()}, {user?.name?.split(' ')[0]} 👋</h1>
           <p style={s.date}>{today}</p>
         </div>
-        <button onClick={() => setShowBudgetMgr(v => !v)} style={s.budgetBtn}>
-          {showBudgetMgr ? 'Close Budgets' : '⚙ Manage Budgets'}
-        </button>
+        <Link to="/budgets" style={s.budgetBtn}>⚙ Manage Budgets</Link>
       </div>
 
       {/* Stat Cards */}
@@ -143,20 +125,20 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Budget Progress */}
-      {budgets.length > 0 && (
-        <div style={s.card}>
-          <div style={s.cardHeader}>
-            <h3 style={s.cardTitle}>Budget Status — {new Date().toLocaleString('default', { month: 'long' })}</h3>
-          </div>
+      {/* Budget Snapshot */}
+      <div style={s.card}>
+        <div style={s.cardHeader}>
+          <h3 style={s.cardTitle}>Budget Snapshot — {new Date().toLocaleString('default', { month: 'long' })}</h3>
+          <Link to="/budgets" style={s.viewAll}>View all →</Link>
+        </div>
+        {budgets.length > 0 ? (
           <div style={s.budgetGrid}>
-            {budgets.map(b => {
+            {budgets.slice(0, 4).map(b => {
               const spent = parseFloat(b.spentAmount || 0)
               const limit = parseFloat(b.limitAmount)
-              const pct = Math.min((spent / limit) * 100, 100)
-              const over = spent > limit
-              const warn = pct >= 80
-              const color = over ? 'var(--expense)' : warn ? 'var(--warning)' : 'var(--income)'
+              const pct   = Math.min((spent / limit) * 100, 100)
+              const over  = spent > limit
+              const color = over ? 'var(--expense)' : pct >= 80 ? 'var(--warning)' : 'var(--income)'
               return (
                 <div key={b.id} style={s.budgetItem}>
                   <div style={s.budgetTop}>
@@ -168,22 +150,17 @@ export default function Dashboard() {
                   <div style={s.track}>
                     <div style={{ ...s.fill, width: `${pct}%`, background: color }} />
                   </div>
-                  {over && <p style={{ color: 'var(--expense)', fontSize: '0.72rem', marginTop: 4, fontWeight: 500 }}>⚠ Over budget by ${fmt(spent - limit)}</p>}
+                  {over && <p style={{ color: 'var(--expense)', fontSize: '0.72rem', marginTop: 4, fontWeight: 500 }}>⚠ Over by ${fmt(spent - limit)}</p>}
                 </div>
               )
             })}
           </div>
-        </div>
-      )}
-
-      {/* Budget Manager */}
-      {showBudgetMgr && (
-        <BudgetManager
-          categories={categories} budgets={budgets}
-          onSave={handleSaveBudget} onDelete={handleDeleteBudget}
-          onClose={() => setShowBudgetMgr(false)}
-        />
-      )}
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-3)', fontSize: '0.875rem' }}>
+            No budgets set. <Link to="/budgets" style={{ color: 'var(--balance)', fontWeight: 600 }}>Set your first budget →</Link>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -232,6 +209,7 @@ const s = {
   legend: { display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-3)' },
   legendDot,
   emptyChart: { height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', fontSize: '0.85rem' },
+  viewAll: { fontSize: '0.8rem', fontWeight: 600, color: 'var(--balance)', textDecoration: 'none' },
   budgetGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px 28px' },
   budgetItem: {},
   budgetTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },

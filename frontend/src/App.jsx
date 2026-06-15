@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
+import Budgets from './pages/Budgets'
 
 function PrivateRoute({ children }) {
   const { token } = useAuth()
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/transactions" element={<PrivateRoute><Transactions /></PrivateRoute>} />
+        <Route path="/budgets" element={<PrivateRoute><Budgets /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
