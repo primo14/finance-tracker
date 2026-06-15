@@ -2,8 +2,10 @@ package com.financetracker.repository;
 
 import com.financetracker.model.Transaction;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,6 +14,11 @@ import java.util.List;
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
     List<Transaction> findByUserIdOrderByDateDesc(Long userId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Transaction t SET t.category = null WHERE t.category.id = :categoryId")
+    void clearCategory(@Param("categoryId") Long categoryId);
 
     @Query("SELECT COALESCE(t.category.name, 'Uncategorized'), SUM(t.amount) " +
            "FROM Transaction t " +
