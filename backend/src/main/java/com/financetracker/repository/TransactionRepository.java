@@ -33,6 +33,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("start") LocalDate start,
             @Param("end") LocalDate end);
 
+    @Query(value = "SELECT EXTRACT(YEAR FROM date)::int, EXTRACT(MONTH FROM date)::int, type, SUM(amount) " +
+                   "FROM transactions WHERE user_id = :userId AND date >= :since " +
+                   "GROUP BY EXTRACT(YEAR FROM date)::int, EXTRACT(MONTH FROM date)::int, type " +
+                   "ORDER BY 1, 2", nativeQuery = true)
+    List<Object[]> findMonthlySummary(@Param("userId") Long userId, @Param("since") LocalDate since);
+
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t " +
            "WHERE t.user.id = :userId AND t.type = :type")
     BigDecimal sumByUserIdAndType(

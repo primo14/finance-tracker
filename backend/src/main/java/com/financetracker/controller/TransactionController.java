@@ -1,5 +1,6 @@
 package com.financetracker.controller;
 
+import com.financetracker.dto.MonthlyDataDto;
 import com.financetracker.dto.SummaryDto;
 import com.financetracker.dto.TransactionDto;
 import com.financetracker.service.TransactionService;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -27,6 +29,11 @@ public class TransactionController {
     @GetMapping("/summary")
     public ResponseEntity<SummaryDto> getSummary(Principal principal) {
         return ResponseEntity.ok(transactionService.getSummary(principal.getName()));
+    }
+
+    @GetMapping("/monthly")
+    public ResponseEntity<List<MonthlyDataDto>> getMonthly(Principal principal) {
+        return ResponseEntity.ok(transactionService.getMonthlySummary(principal.getName()));
     }
 
     @PostMapping

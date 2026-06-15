@@ -1,5 +1,6 @@
 package com.financetracker.service;
 
+import com.financetracker.dto.MonthlyDataDto;
 import com.financetracker.dto.SummaryDto;
 import com.financetracker.dto.TransactionDto;
 import com.financetracker.model.Transaction;
@@ -12,8 +13,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.time.format.TextStyle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,6 +80,33 @@ public class TransactionService {
                 .collect(Collectors.toList());
 
         return new SummaryDto(income, expenses, income.subtract(expenses), breakdown);
+    }
+
+    public List<MonthlyDataDto> getMonthlySummary(String email) {
+        User user = requireUser(email);
+        LocalDate since = LocalDate.now().minusMonths(5).withDayOfMonth(1);
+
+        Map<String, BigDecimal[]> map = new LinkedHashMap<>();
+        for (int i = 5; i >= 0; i--) {
+            LocalDate m = LocalDate.now().minusMonths(i);
+            map.put(m.getYear() + "-" + String.format("%02d", m.getMonthValue()),
+                    new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+        }
+
+        for (Object[] row : transactionRepository.findMonthlySummary(user.getId(), since)) {
+            String key = row[0] + "-" + String.format("%02d", ((Number) row[1]).intValue());
+            if (map.containsKey(key)) {
+                if ("INCOME".equals(row[2])) map.get(key)[0] = (BigDecimal) row[3];
+                else map.get(key)[1] = (BigDecimal) row[3];
+            }
+        }
+
+        return map.entrySet().stream().map(e -> {
+            String[] p = e.getKey().split("-");
+            String monthName = LocalDate.of(Integer.parseInt(p[0]), Integer.parseInt(p[1]), 1)
+                    .getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+            return new MonthlyDataDto(monthName, e.getValue()[0], e.getValue()[1]);
+        }).collect(Collectors.toList());
     }
 
     private User requireUser(String email) {

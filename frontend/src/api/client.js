@@ -28,6 +28,7 @@ export const authApi = {
 export const transactionApi = {
   getAll: () => client.get('/transactions'),
   getSummary: () => client.get('/transactions/summary'),
+  getMonthly: () => client.get('/transactions/monthly'),
   create: data => client.post('/transactions', data),
   update: (id, data) => client.put(`/transactions/${id}`, data),
   delete: id => client.delete(`/transactions/${id}`),
