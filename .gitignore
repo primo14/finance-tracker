@@ -1,0 +1,38 @@
+# ── Maven ──────────────────────────────────────────────────
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+!backend/.mvn/wrapper/maven-wrapper.properties
+
+# ── Java ───────────────────────────────────────────────────
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+
+# ── Spring Boot ────────────────────────────────────────────
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-prod.yml
+
+# ── Node / Frontend ────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ── Environment / Secrets ──────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── IDEs ───────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ── OS ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
